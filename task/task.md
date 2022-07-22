@@ -6,8 +6,9 @@
 * (这一部分不是必读的)
 
 1. 关于每次训练的（超）参数（的模板），参考 `benchmark/configs/femnist/conf.yml` 中的内容
-    * 如果不知道可以加的参数的全集是什么，可以在 `/fedscale/core/config_parser.py` 中查看
+    * 如果不知道可以加的参数的全集是什么，可以在 `/fedscale/core/config_parser.py` 中查看 
     * 有一些参数config是在代码运行过程中自动加入的（比如 `--this_rank` 这个参数，用来标记 executor 的 index，从1开始编号，就是在 docker/driver.py 中自动生成的），一般这种config不需要我们自己去管它
+    * `所有参数的默认值也在这里面`
 
 2. 关于整个训练的启动过程，可以参考 `docker/driver.py` 中的内容
 3. `/fedscale/core/fllibs.py` 这个python file 主要是用来提供对全局适用的 `model selector` 和 `dataset selector`
@@ -22,6 +23,7 @@
         2. 然后我们拿到最开始的数据集是通过 `/fedscale/core/fllibs.py` 中的 `init_dataset()` 这个函数，拿到如上述样子的对象（__attention: 之后我们如果要跑我们自己的除了feminst和reddit的数据集的话，就需要在这个`init_dataset()`里多加一个elif，并且在`fedscale/dataloaders/($our_dataset_name).py`里写好基本功能，可能也需要在`fedscale/dataloaders/utils_data.py`里多写一个新数据集的`transform()`函数的内容__）
         3. 而真正要用到数据集的时候是在 `/fedscale/core/execution/executor.py` 中的 `Executor.init_data()`。这个函数会先调用上面说到的 `init_dataset()`，然后再把我们得到的初始数据集喂进 `/fedscale/dataloaders/divide_data.py`中的类`DataPartitioner`进行上面描述过的client数据划分，对femnist而言就是对着`client_data_mapping/`目录下的文件进行划分
         4. (这一条针对的是 `/fedscale/core/execution/executor.py` 中的内容)但这仅仅完成了数据集的初始化，等到之后每一个client要`train`或者`test`并需要用数据集时，会分别在`training_handler()`和`testing_handler()`里调用 `/fedscale/dataloaders/divide_data.py`中的函数 `select_dataset()` 进行数据选取。而这个函数则会根据你是哪个`executor`(--this_rank)来从对应的数据集中选出数据返回
+    * 最后说明一下，fedscale对femnist的62个label的标注应该是乱序的(并不是10个数字26*2个字母是顺序排列成label的)，并且暂时也还未找到这个mapping
 
 5. (大部分)通信好像用的(都)是`gRPC`
 
@@ -41,16 +43,30 @@
     6. 在这里面，上述被加到信息队列的local test result会被收进 `self.test_result_accumulator` 这个变量里
     7. 而当`self.testing_completion_handler()`发现所有这一轮测试的 `client` 都把local test result发回来了之后，就会调用 `/fedscale/core/logger/aggragation.py` 中的 `aggregate_test_result()`，实现从 `test_result_accumulator` 到 `testing_history` 的 mapping的同时在 aggregator 端进行logging （__也就是上面说的aggregator端对应可以改的地方__）
 
-8. 其他的部分可能没太仔细看，或者看了但感觉对目前的task帮助不大。之后可以补充一下（如果需要的话），而且到时候可以直接看 API documentation 了
+8. 关于FedScale对reddit的处理：
+    * 很多部分和femnist重叠，这里挑一些不一样的地方中的重点说明一下
+    * 首先比较迷惑的一点是它对应于`args.data_set=blog` : <img src = "image/4.png" height = "500"> 。__这也就是说我们需要查看`/fedscale/core/fllibs.py`中`init_dataset()`里`'blog'`对应的内容__
+    * 同时在上面reddit的config中也可以发现模型是`albert-base-v2`，于是我们再到`/fedscale/core/fllibs.py`的`init_model()`中查看相关代码，发现了：<img src = "image/5.png" height = "200"> <img src = "image/6.png" height = "200"> 所以这个config应该是用了预训练好的一种transformer? 但由于我们之后需要用`LSTM`，所以这一部分的代码应该是需要修改一下的。FedScale应该提供了大部分常见的CV/NLP模型（的pytorch代码），只不过它的demo里只用了很少一部分，剩下一部分写好的model的可用性未知（__比如在`init_model`中nlp的task目前只能使用预训练的transformer，虽然FedScale也提供了RNN等传统的NLP model. 考虑到FedScale还在快速update中，有很大概率之后会完善这一部分（__）
+    * 由于服务器一直连不上，也没有把FedScale的reddit下下来好好观察，连上之后再update一下这个条目（
 
+9. __关于FedScale提供的model：__
+    * 主要考虑pytorch的model，因为FedScale大多数情况下都是用pytorch. 写好的模型目录在 `/fedscale/utils/models`
+    * 其中我们要用的大部分模型（femnist:lenet/logistic_regression ; reddit:rnn(lstm) ; FATE:logistic_regression/linear_regression）在`/fedscale/utils/models/simple/models.py`中都有，不需要我们自己写
+    * 但我们可能还需要`mlp`，也就是多层感知机，可以直接搬运[为之前框架写好的](https://github.com/AI-secure/FLBenchmark-evaluations-dirty/blob/main/FedML/fedml/untracked/non_linear/mlp.py)
+
+
+
+10.  其他的部分可能没太仔细看，或者看了但感觉对目前的task帮助不大。之后可以补充一下（如果需要的话），而且到时候可以直接看 API documentation 了
 
 ## Task 1
-* 主要参考上面的 `4. 关于FedScale对femnist的处理`，对源码进行一定程度的修改使得我们可以跑通我们自己的 `femnist`/`reddit`/`give_credit_horizontal`/`default_credit_horizontal` 数据集 （后两个是 FATE的数据集，具体使用方法可以参考[toolkit](https://github.com/AI-secure/FLBenchmark-toolkit/tree/main/tutorials)，数据集的属性可以参考 [sheet](https://docs.google.com/spreadsheets/d/1RBJpqjUeYOq5ffM_8B9NRSfC_zZTQRrjLuld_FVGElI/edit#gid=0)中的内容）
+* 主要参考上面的 `4. 关于FedScale对femnist的处理` 和 `8. 关于FedScale对reddit的处理`，对源码进行一定程度的修改使得我们可以跑通我们自己的 `femnist`/`reddit`/`give_credit_horizontal`/`default_credit_horizontal` 数据集 （后两个是 FATE的数据集，具体使用方法可以参考[toolkit](https://github.com/AI-secure/FLBenchmark-toolkit/tree/main/tutorials)，数据集的属性可以参考 [sheet](https://docs.google.com/spreadsheets/d/1RBJpqjUeYOq5ffM_8B9NRSfC_zZTQRrjLuld_FVGElI/edit#gid=0)中的内容）
 * 可以先使用它默认的metric : accuracy 进行观察
 
 ## Task 2
 * 主要参考上面的 `7. 关于FedScale对Test过程的处理`，对源码进行一定程度的修改使得可以支持二分类（`give_credit_horizontal`/`default_credit_horizontal`）的 `AUC` (建议使用 sklearn 算AUC的函数，以实现和之前框架的对齐)
 
+## Task 2.5
+* 其实可能还需要一个script用来把我们从config.json转化成FedScale的conf.yaml，这个大概在 Task2 和 Task3 之间比较合适（个人观点
 
 ## Task 3
 - logging system
