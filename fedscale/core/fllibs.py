@@ -286,11 +286,11 @@ def init_dataset():
         elif args.data_set == 'femnist2':
             from fedscale.dataloaders.femnist2 import FEMNIST2
 
-            # train_transform, test_transform = get_data_transform('mnist')
+            train_transform, test_transform = get_data_transform('mnist')
             train_dataset = FEMNIST2(
-                args.data_dir, dataset='train')
+                args.data_dir, dataset='train', transforms = train_transform)
             test_dataset = FEMNIST2(
-                args.data_dir, dataset='test')
+                args.data_dir, dataset='test', transforms = test_transform)
 
 
         elif args.data_set == 'openImg':

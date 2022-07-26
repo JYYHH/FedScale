@@ -7,7 +7,7 @@ import os.path
 import warnings
 
 import numpy as np
-import tensorflow as tf
+import torch
 
 class FEMNIST2():
     """
@@ -47,9 +47,10 @@ class FEMNIST2():
         warnings.warn("test_data has been renamed data")
         return self.data
 
-    def __init__(self, root,dataset='train'):
+    def __init__(self, root, dataset='train', transform=None):
         self.root = root
         self.dataset = dataset # 'train','test'
+        self.transform = transform
 
         self.path = os.path.join(self.processed_folder, self.dataset)
         self.data_name, self.data = self.read_data_femnist2(self.path)
@@ -63,8 +64,12 @@ class FEMNIST2():
             tuple: (json, target) where target is index of the target class.
         """
         cur_name = self.data_name[index]
+        cur_data = self.data[cur_name]['x']
+        
+        if self.transform is not None:
+            cur_data = self.transform(cur_data)
 
-        return self.data[cur_name]['x'], self.data[cur_name]['y']
+        return cur_data, self.data[cur_name]['y']
 
     def __len__(self):
         return len(self.data)

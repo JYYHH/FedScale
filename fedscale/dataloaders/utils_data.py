@@ -3,7 +3,7 @@
 import sys
 
 from torchvision import transforms
-
+import torch
 
 def get_data_transform(data: str):
     if data == 'mnist':
