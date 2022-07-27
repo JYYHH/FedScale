@@ -45,6 +45,7 @@ class DataPartitioner(object):
         self.task = args.task
         self.numOfLabels = numOfClass
         self.client_label_cnt = defaultdict(set)
+        self.dvd_num = self.data.dvd_num
 
     def getNumOfLabels(self):
         return self.numOfLabels
@@ -91,10 +92,18 @@ class DataPartitioner(object):
         for idx in range(sample_id):
             self.partitions[clientId_maps[idx]].append(idx)
 
+    def fate_partition(self):
+        if self.isTest:
+            self.partitions = [list(range(self.data_len)), list(range(self.data_len))]
+        else:
+            self.partitions = [list(range(self.dvd_num)), list(range(self.dvd_num, self.data_len))]
+
     def partition_data_helper(self, num_clients, data_map_file=None):
 
         # read mapping file to partition trace
-        if data_map_file is not None:
+        if self.args.task == "simple":
+            self.fate_partition()
+        elif data_map_file is not None:
             self.trace_partition(data_map_file)
         else:
             self.uniform_partition(num_clients=num_clients)

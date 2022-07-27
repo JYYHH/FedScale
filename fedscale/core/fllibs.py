@@ -95,9 +95,12 @@ os.environ['MASTER_PORT'] = args.ps_port
 
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
-               'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010
+               'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010,
+               'give_credit_horizontal': 2, 'default_credit_horizontal': 2
                }
 
+# used for FATE
+inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23}
 
 def init_model():
     global tokenizer
@@ -198,8 +201,18 @@ def init_model():
         return model
     elif args.task == 'rl':
         model = DQN(args).target_net
+    ### FATE part
+    elif args.task == 'simple':
+        if args.model == 'logistic_regression':
+            from fedscale.utils.models.simple.models import LogisticRegression
+            model = LogisticRegression(inputClass[args.data_set], outputClass[args.data_set])
+        elif args.model == 'linear_regression':
+            from fedscale.utils.models.simple.models import linearRegression
+            model = linearRegression(inputClass[args.data_set], outputClass[args.data_set])
+        elif args.model[:3] == "mlp":
+            pass # remain work here
     else:
-        if args.model == "lr":
+        if args.model == "lr" or args.model == 'logistic_regression':
             from fedscale.utils.models.simple.models import LogisticRegression
             model = LogisticRegression(
                 args.input_dim, outputClass[args.data_set])
@@ -283,16 +296,6 @@ def init_dataset():
             test_dataset = FEMNIST(
                 args.data_dir, dataset='test', transform=test_transform)
 
-        elif args.data_set == 'femnist2':
-            from fedscale.dataloaders.femnist2 import FEMNIST2
-
-            train_transform, test_transform = get_data_transform('mnist')
-            train_dataset = FEMNIST2(
-                args.data_dir, dataset='train', transforms = train_transform)
-            test_dataset = FEMNIST2(
-                args.data_dir, dataset='test', transforms = test_transform)
-
-
         elif args.data_set == 'openImg':
             from fedscale.dataloaders.openimage import OpenImage
 
@@ -375,6 +378,10 @@ def init_dataset():
                                               normalize=True,
                                               speed_volume_perturb=False,
                                               spec_augment=False)
+        elif args.data_set == 'give_credit_horizontal':
+            from fedscale.dataloaders.give_credit_horizontal import GCH
+            train_dataset = GCH(args.data_dir, dataset='train')
+            test_dataset = GCH(args.data_dir, dataset='test')            
         else:
             logging.info('DataSet must be {}!'.format(
                 ['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
