@@ -37,9 +37,9 @@ class GCH():
     def __init__(self, root, dataset='train', transform=None, target_transform=None, imgview=False):
 
         self.data_file = dataset  # 'train', 'test', 'validation'
-        self.data_files = [self.data_file + 'give_credit_homo_guest.csv', 
-                           self.data_file + 'give_credit_homo_host.csv',
-                           self.data_file + 'give_credit_homo_test.csv'
+        self.data_files = [self.data_file + '/give_credit_homo_guest.csv', 
+                           self.data_file + '/give_credit_homo_host.csv',
+                           self.data_file + '/give_credit_homo_test.csv'
                           ]
         self.root = root # $FEDSCALE_HOME/benchmark/dataset/csv_data/give_credit_horizontal
         # load data and targets
@@ -70,17 +70,17 @@ class GCH():
         # load meta file to get labels
         if self.data_file == "test":
             path = os.path.join(self.root, self.data_files[-1])
-            Numpy = np.array(df.read_csv(path))
+            Numpy = np.array(pd.read_csv(path))
             datas, labels = Numpy[:, 2:], Numpy[:, 1]
             self.dvd_num = 0
         else:
             path = os.path.join(self.root, self.data_files[0])
-            Numpy = np.array(df.read_csv(path))
+            Numpy = np.array(pd.read_csv(path))
             datas, labels = Numpy[:, 2:], Numpy[:, 1]
             self.dvd_num = labels.shape[0]
 
             path = os.path.join(self.root, self.data_files[1])
-            Numpy = np.array(df.read_csv(path))
+            Numpy = np.array(pd.read_csv(path))
             datas, labels = np.vstack((datas, Numpy[:, 2:])), np.vstack((labels, Numpy[:, 1]))
 
         return datas, labels
