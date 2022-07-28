@@ -53,7 +53,7 @@ class FEMNIST2():
         self.transform = transform
 
         self.path = os.path.join(self.processed_folder, self.dataset)
-        self.data_name, self.data = self.read_data_femnist2(self.path)
+        self.data, self.targets = self.read_data_femnist2(self.path)
 
     def __getitem__(self, index):
         """
@@ -63,13 +63,12 @@ class FEMNIST2():
         Returns:
             tuple: (json, target) where target is index of the target class.
         """
-        cur_name = self.data_name[index]
-        cur_data = self.data[cur_name]['x']
+        cur_data = self.data[index]
         
         if self.transform is not None:
             cur_data = self.transform(cur_data)
 
-        return cur_data, self.data[cur_name]['y']
+        return cur_data, self.data[index]
 
     def __len__(self):
         return len(self.data)
@@ -85,19 +84,20 @@ class FEMNIST2():
     def _check_exists(self):
         return (os.path.exists(os.path.join(self.processed_folder,self.dataset))) 
         
-    def read_data_femnist2(data_dir):
-        ret_name = []
-        ret_data = {}
+    def read_data_femnist2(self,data_dir):
+        ret_data = []
+        ret_label = []
 
         files = os.listdir(data_dir)        
         files = [f for f in files if f.endswith('.json') and f[0]!='_']
         for f in files:
-            f_name = f.split('.')[0]
-            ret_data[f_name] = {}
-            ret_name.append(f_name)
+            # f_name = f.split('.')[0]
+            # ret_data[f_name] = {}
+            # ret_name.append(f_name)
 
             file_path = os.path.join(data_dir, f)
             my_data = np.array(json.load(open(file_path, 'r'))["records"])
-            ret_data[f_name]['x'],ret_data[f_name]['y'] = my_data[:,1:], my_data[:,0]
+            ret_data.append(my_data[:,1:])
+            ret_label.append(my_data[:,0])
         
-        return ret_name, ret_data
+        return ret_data, ret_label

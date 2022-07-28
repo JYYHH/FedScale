@@ -33,7 +33,7 @@ job_conf:
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
     - num_participants: 20                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist2                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/femnist2    # Path of the dataset
+    - data_dir: $FEDSCALE_HOME/benchmark/data/femnist2    # Path of the dataset
     # - data_map_file: $FEDSCALE_HOME/benchmark/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
     - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
     - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
