@@ -96,7 +96,7 @@ os.environ['MASTER_PORT'] = args.ps_port
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010,
-               'give_credit_horizontal': 2, 'default_credit_horizontal': 2
+               'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2':62,
                }
 
 # used for FATE
