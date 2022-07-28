@@ -95,6 +95,7 @@ def process_cmd(yaml_file, local=False):
     time.sleep(10)
     # =========== Submit job to each worker ============
     rank_id = 1
+    os.environ["CUDA_VISIBLE_DEVICES"]="2,3"
     for worker, gpu in zip(worker_ips, total_gpus):
         running_vms.add(worker)
         print(f"Starting workers on {worker} ...")
