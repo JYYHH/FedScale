@@ -100,11 +100,16 @@ class DataPartitioner(object):
         else:
             self.partitions = [list(range(self.dvd_num)), list(range(self.dvd_num, self.data_len))]
 
+    def femnist_partition(self):
+        self.partitions = [list(range(self.data_len)), list(range(self.data_len))]
+
     def partition_data_helper(self, num_clients, data_map_file=None):
 
         # read mapping file to partition trace
         if self.args.task == "simple":
             self.fate_partition()
+        elif self.args.task == "simple_femnist":
+            self.femnist_partition()
         elif data_map_file is not None:
             self.trace_partition(data_map_file)
         else:

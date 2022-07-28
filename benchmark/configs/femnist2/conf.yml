@@ -31,10 +31,11 @@ setup_commands:
 job_conf: 
     - job_name: femnist2                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
+    - task: simple_femnist
     - num_participants: 20                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist2                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $FEDSCALE_HOME/benchmark/data/femnist2    # Path of the dataset
-    # - data_map_file: $FEDSCALE_HOME/benchmark/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
+    - data_dir: $FEDSCALE_HOME/benchmark/data/femnist    # Path of the dataset
+    - data_map_file: None # $FEDSCALE_HOME/benchmark/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
     - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
     - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
     - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
