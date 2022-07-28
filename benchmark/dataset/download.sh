@@ -36,6 +36,7 @@ Help()
    echo "taxi                         Taxi Trajectory dataset (about 504M)"
    echo "waymo                        Waymo Motion dataset meta file (about 74M)"
    echo "femnist                      FEMNIST dataset (about 327M)"
+   echo "femnist2                     FEMNIST benchmark dataset"
    echo "stackoverflow                StackOverflow dataset (about 13G)"
    echo "blog                         Blog dataset (about 833M)"
    echo "common_voice                 Common Voice dataset (about 87G)"
@@ -369,6 +370,17 @@ femnist()
 fi
 }
 
+femnist2()
+{
+# todo1
+    if [! -d "${DIR}/femnist2"];
+    then
+        python download_femnist2.py
+    else
+        echo -e "${RED}FEMNIST2 dataset already exists under ${DIR}/femnist2/! ${NC}"
+fi
+}
+
 puffer()
 {
     if [ ! -d "${DIR}/puffer" ];
@@ -473,6 +485,9 @@ Download() {
             femnist )
                 femnist
                 ;;
+            femnist2 )
+                femnist2
+                ;;
             blog )
                 blog
                 ;;
@@ -541,6 +556,9 @@ Remove() {
                 rm -rf  ${DIR}/$data;
                 ;;
             femnist )
+                rm -rf  ${DIR}/$data;
+                ;;
+            femnist2 )
                 rm -rf  ${DIR}/$data;
                 ;;
             blog )
