@@ -3,6 +3,8 @@ import csv
 import logging
 import random
 import time
+import os
+import json
 from collections import defaultdict
 from random import Random
 
@@ -100,10 +102,34 @@ class DataPartitioner(object):
         else:
             self.partitions = [list(range(self.dvd_num)), list(range(self.dvd_num, self.data_len))]
 
-    def femnist_partition(self):
-        self.partitions = [list(range(self.data_len)), list(range(self.data_len))]
+    def femnist_partition(self, data_dir):
+        logging.info("partitioning femnist dataset")
 
-    def partition_data_helper(self, num_clients, data_map_file=None):
+        self.partitions = []
+
+        if self.isTest:
+            data_dir = os.path.join(data_dir,'test')
+        else:
+            data_dir = os.path.join(data_dir,'train')
+        
+        isExists = os.path.exists(data_dir)
+        logging.info(f"checking:{isExists}")
+
+        files = os.listdir(data_dir)        
+        files = [f for f in files if f.endswith('.json') and f[0]!='_']
+
+        sum_len = 0
+        for f in files:
+            file_path = os.path.join(data_dir, f)
+            my_data = np.array(json.load(open(file_path, 'r'))["records"])
+            cur_data_len = len(my_data[:,0])
+
+            self.partitions.append(list(range(sum_len,sum_len+cur_data_len)))
+            sum_len = sum_len + cur_data_len
+
+
+
+    def partition_data_helper(self, num_clients, data_map_file=None, data_dir = None):
 
         # read mapping file to partition trace
         if self.args.task == "simple":

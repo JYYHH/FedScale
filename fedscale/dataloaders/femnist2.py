@@ -68,7 +68,7 @@ class FEMNIST2():
         if self.transform is not None:
             cur_data = self.transform(cur_data)
 
-        return cur_data, self.data[index]
+        return cur_data, self.targets[index]
 
     def __len__(self):
         return len(self.data)
@@ -90,14 +90,16 @@ class FEMNIST2():
 
         files = os.listdir(data_dir)        
         files = [f for f in files if f.endswith('.json') and f[0]!='_']
-        for f in files:
-            # f_name = f.split('.')[0]
-            # ret_data[f_name] = {}
-            # ret_name.append(f_name)
 
+        for f in files:
             file_path = os.path.join(data_dir, f)
             my_data = np.array(json.load(open(file_path, 'r'))["records"])
-            ret_data.append(my_data[:,1:])
-            ret_label.append(my_data[:,0])
-        
+            
+            cur_data, cur_label = my_data[:,1:], my_data[:,0]
+
+            for d in cur_data:
+                ret_data.append(d)
+            for l in cur_label:
+                ret_label.append(l)
+
         return ret_data, ret_label
