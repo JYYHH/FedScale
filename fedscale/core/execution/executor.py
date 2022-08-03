@@ -422,6 +422,8 @@ class Executor(object):
                     train_model = self.deserialize_response(request.data)
                     train_config['model'] = train_model
                     train_config['client_id'] = int(train_config['client_id'])
+                    x = train_config['client_id']
+                    logging.info(f'%%%%%%%%%%% Using part {x} ------- %%%%%%%%%%%%')
                     client_id, train_res = self.Train(train_config)
 
                     # Upload model updates
