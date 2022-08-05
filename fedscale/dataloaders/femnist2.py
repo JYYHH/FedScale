@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 import torch
 
+from PIL import Image
+
 class FEMNIST2():
     """
     Args:
@@ -65,10 +67,15 @@ class FEMNIST2():
         """
         cur_data = self.data[index]
         
-        if self.transform is not None:
-            cur_data = self.transform(cur_data)
+        cur_img = Image.fromarray(cur_data)
 
-        return cur_data, self.targets[index]
+        if cur_img.mode != 'RGB':
+            cur_img = cur_img.convert('RGB')
+
+        if self.transform is not None:
+            cur_img = self.transform(cur_img)
+
+        return cur_img, self.targets[index]
 
     def __len__(self):
         return len(self.data)

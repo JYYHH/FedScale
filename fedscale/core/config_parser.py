@@ -29,6 +29,8 @@ parser.add_argument('--device_avail_file', type=str, default=None)
 parser.add_argument('--clock_factor', type=float, default=1.0,
                     help="Refactor the clock time given the profile")
 
+parser.add_argument('--temp_tag',type=str,default='no_tag')
+
 # The configuration of model and dataset
 parser.add_argument('--model_zoo', type=str, default='torchcv',
                     help="model zoo to load the models from", choices=["torchcv", "fedscale-zoo"])

@@ -43,6 +43,8 @@ class DataPartitioner(object):
         self.isTest = isTest
         np.random.seed(seed)
 
+        self.temp_tag = args.temp_tag
+
         self.data_len = len(self.data)
         self.task = args.task
         self.numOfLabels = numOfClass
@@ -134,7 +136,7 @@ class DataPartitioner(object):
         # read mapping file to partition trace
         if self.args.task == "simple":
             self.fate_partition()
-        elif self.args.task == "simple_femnist":
+        elif self.args.temp_tag == "simple_femnist":
             self.femnist_partition(data_dir)
         elif data_map_file is not None:
             self.trace_partition(data_map_file)
