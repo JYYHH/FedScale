@@ -135,7 +135,7 @@ class DataPartitioner(object):
         if self.args.task == "simple":
             self.fate_partition()
         elif self.args.task == "simple_femnist":
-            self.femnist_partition()
+            self.femnist_partition(data_dir)
         elif data_map_file is not None:
             self.trace_partition(data_map_file)
         else:

@@ -119,7 +119,7 @@ class Executor(object):
 
         testing_sets = DataPartitioner(
             data=test_dataset, args=self.args, numOfClass=self.args.num_class, isTest=True)
-        testing_sets.partition_data_helper(num_clients=self.num_executors)
+        testing_sets.partition_data_helper(num_clients=self.num_executors, data_dir = self.args.data_dir)
 
         logging.info("Data partitioner completes ...")
 
