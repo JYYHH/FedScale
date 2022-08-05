@@ -55,12 +55,34 @@
     * 但我们可能还需要`mlp`，也就是多层感知机，可以直接搬运[为之前框架写好的](https://github.com/AI-secure/FLBenchmark-evaluations-dirty/blob/main/FedML/fedml/untracked/non_linear/mlp.py)
 
 
+10. __FedScale如何记录clients总数（和相关）的信息？__
+    * 首先接 `4. 关于FedScale对femnist的处理`，在 `/fedscale/core/execution/executor.py#L128` 有 `self.training_sets, self.testing_sets = self.init_data()`，使得 这两个变量都是 class `DataPartitioner()` (/fedscale/dataloeaders/divide_data.py)。这个类有一个方法 `getSize(self)`，可以返回 __每一份数据(对应一个client)的样本数__ 。
+    * 之后，`executor`的函数 `report_executor_info_handler()` 将 `getSize(self)` 返回的信息通过 `client_register()` 里的 `CLIENT_REGISTER( executor 和 aggregator 之间share的function)` 传给 `aggregator`，再经其方法 `executor_info_handler()` 将这个 info 传给 `client_register_handler()`，并在下图这个位置完成client的register （`fedscale/core/aggregation/aggregator.py#L230~243`） ： <img src = "image/8.png" height = "200"> 。可以发现的是，__恰好每一份data的partition就对应于一个可以被sample到的client，这也是非常合理的__
+        * 再接着这一点讲，在`self.client_manager.register_client()`会完成每个client的注册，并把信息存在 `client_manager` 的属性 `feasibleClients(用来记录所有有数据的clients的index的list)` 和 `feasible_samples(用来记录总样本数，sum of it in every client)`里了
+        * 
+    * 还有一点比较重要，那就是这里（`fedscale/core/aggregation/aggregator.py#L230~243`）: <img src = "image/9.png" height = "200"> ( 我们的实验目前默认的都是`SIMULATION_MODE`, 这也是default_setting )，注意 L264 的 if，这表明了我们 __只需要为每个 `data_partition` 注册一次。__  (这也很合理，虽然我们有 `num_participants` 个 `executor` 的 process 去 sample每一轮的数据，但其实每一个 `executor.training_sets` (和test) 的 data partition 都是一样的，所以我们只需要根据最后被 `aggregator` 接触到的那个 `executor` 去 register clients就可以了)
+    * 
+11. __FedScale每个global round怎么sample clients？__
+    * 这个讨论的基础是 10. 中讨论的怎么建立 用来sample的clients的全集
+    * 这个部分主要在 `aggregator#L527~530`。其中我们主要关注一下第一个函数 `aggregator.select_participants()`, 它会调用 `self.client_manager.select_participants()` 来从clients的全集中选择 `int(args.num_participants * overcommitment)` 个；返回后再由另一个函数 `aggregator.tictak_client_tasks` 来决定这一轮真正要跑的 是哪些clients的data
+    * 而上述的 `client_manager` 其实就是 `/fedscale/core/client_manager.py` 中的class（的一个object），看了一下就是 `select_participants()` 这个function其实就是 shuffle 一下然后选前 x 个，相当于每个client都等概率 ($\frac{x}{total\_num}$ ) 被选中
 
-10.  其他的部分可能没太仔细看，或者看了但感觉对目前的task帮助不大。之后可以补充一下（如果需要的话），而且到时候可以直接看 API documentation 了
+12.  其他的部分可能没太仔细看，或者看了但感觉对目前的task帮助不大。之后可以补充一下（如果需要的话），而且到时候可以直接看 API documentation 了
 
 ## Task 1
 * 主要参考上面的 `4. 关于FedScale对femnist的处理` 和 `8. 关于FedScale对reddit的处理`，对源码进行一定程度的修改使得我们可以跑通我们自己的 `femnist`/`reddit`/`give_credit_horizontal`/`default_credit_horizontal` 数据集 （后两个是 FATE的数据集，具体使用方法可以参考[toolkit](https://github.com/AI-secure/FLBenchmark-toolkit/tree/main/tutorials)，数据集的属性可以参考 [sheet](https://docs.google.com/spreadsheets/d/1RBJpqjUeYOq5ffM_8B9NRSfC_zZTQRrjLuld_FVGElI/edit#gid=0)中的内容）
 * 可以先使用它默认的metric : accuracy 进行观察
+
+### an issue in Task 1 (By JHY, and unsolved)
+* 这个issue对应的内容是上面的 10. 和 11.
+* ___令人疑惑的是，在FATE dataset的训练过程中却出现了这样的情况___ ：<img src = "image/7.png" height = "200">
+    * 此时不仅显示总共有7个client，而且这一轮sample的client的index竟然是 [10, 4]
+    * 这显然是有问题的。由于FATE dataset只能被划分成两部分，所以 `total_feasible_clients` 也应该是 2 才对而不是 7 （而这个logging对应的是 `client_manager` 中的 function  `getDataInfo()`，再看一下这个function，可以发现它输出的`total_feasible_clients`正好是此时 `client_manager.feasibleClients` 的size）
+    * 这个size显然应该是2，因为在 上面的10. 中我们分析了，在我们divide_data最后一步就是把这个 `client_manager.feasibleClients` set to `[1, 2]`。__而下面的证据显示，这个size在register的时候应该还是对的__ <img src = "image/10.png" height = "50"> ，让我们回到 `aggregator` 的 L229，可以发现这正是 上面10. 中介绍的，register的最后一步（在aggregator处）。
+    * 而倒着推的话，`total_feasible_clients=7` 意味着 `len(client_manager.feasibleClients)=7`，而能改变`client_manager.feasibleClients`的地方只有 `/fedscale/core/client_manager.py#L67`，也就是 `client_manager.register_client()`(见上面的 10. )。而能调用这个function的地方只有 `fedscale/core/aggregation/aggregator.py#L239` (目前看来是这样的，如果有其他地方调用了这个function请务必告诉我hhh)，而这正是上面 `Loading xxx client traces...` 的地方，对应于function `aggregator.client_register_handler`。__这就从理论上说明了，如果`total_feasible_clients=7`，那么在这个logging之前出现的logging里面的所有`Loading xxx client traces...`中xxx的sum=7__ ；但非常不幸的是，我的logging里只出现了一条`Loading xxx client traces...`，且xxx=2
+
+* 我认为issue最可能是，别的地方的bug导致register了好多次（类似TCP重传？），所以间接导致了上面这个看似不可解的bug，但最根本的bug是在别处的
+* 而我们在logging里面看不到最根本的bug（目前在解决这个问题...）
 
 ## Task 2
 * 主要参考上面的 `7. 关于FedScale对Test过程的处理`，对源码进行一定程度的修改使得可以支持二分类（`give_credit_horizontal`/`default_credit_horizontal`）的 `AUC` (建议使用 sklearn 算AUC的函数，以实现和之前框架的对齐)
