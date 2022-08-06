@@ -75,7 +75,7 @@ class FEMNIST2():
         if self.transform is not None:
             cur_img = self.transform(cur_img)
 
-        return cur_img, self.targets[index]
+        return cur_img, int(self.targets[index])
 
     def __len__(self):
         return len(self.data)
