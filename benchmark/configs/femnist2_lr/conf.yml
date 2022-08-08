@@ -48,7 +48,7 @@ job_conf:
     - yogi_eta: 3e-3 
     - yogi_tau: 1e-8
     - local_steps: 20
-    - learning_rate: 0.05
+    - learning_rate: 0.001
     - batch_size: 20
     - test_bsz: 20
     - malicious_factor: 4
