@@ -533,6 +533,13 @@ class LogisticRegression(nn.Module):
 
     def forward(self, x):
         x = x.reshape(-1, self.input_dim)
+        if len(x.shape) == 4:  ## NCHW
+            N, C, H, W = x.shape
+        if x.shape[2] == 28: ## femnist
+            x = x[:,1].reshape(N, -1)
+        else:
+            x = x.reshape(N, -1)
+
         output = torch.sigmoid(self.linear(x))
         # output = self.linear(x)
         return output
