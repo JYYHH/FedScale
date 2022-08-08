@@ -9,7 +9,6 @@ import warnings
 import numpy as np
 import torch
 
-from PIL import Image
 
 class FEMNIST2():
     """
@@ -65,17 +64,12 @@ class FEMNIST2():
         Returns:
             tuple: (json, target) where target is index of the target class.
         """
-        cur_data = self.data[index]*255.0
+        cur_data = self.data[index]
+        cur_data = torch.from_numpy(cur_data)
+        cur_data = cur_data.to(torch.float32)
+        cur_data = cur_data.reshape(1,28,28)
         
-        cur_img = Image.fromarray(cur_data)
-
-        if cur_img.mode != 'RGB':
-            cur_img = cur_img.convert('RGB')
-
-        if self.transform is not None:
-            cur_img = self.transform(cur_img)
-
-        return cur_img, int(self.targets[index])
+        return cur_data, int(self.targets[index])
 
     def __len__(self):
         return len(self.data)
