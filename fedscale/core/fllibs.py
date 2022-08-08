@@ -219,6 +219,9 @@ def init_model():
         elif args.model == 'svm':
             from fedscale.utils.models.simple.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
+        elif args.model == 'mnistlenet':
+            from fedscale.utils.models.simple.models import LeNetForMNIST
+            model = LeNetForMNIST(num_classes=args.num_classes)
         else:
             if args.model_zoo == "fedscale-zoo":
                 if args.task == "cv":

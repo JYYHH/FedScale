@@ -41,13 +41,13 @@ class LinearRegression(nn.Module):
 
 class LeNetForMNIST(nn.Module):
 
-    def __init__(self):
+    def __init__(self, num_classes = 62):
         super(LeNetForMNIST, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 4 * 4, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, num_classes)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
