@@ -65,7 +65,7 @@ class FEMNIST2():
         Returns:
             tuple: (json, target) where target is index of the target class.
         """
-        cur_data = self.data[index]
+        cur_data = self.data[index]*255.0
         
         cur_img = Image.fromarray(cur_data)
 
