@@ -96,11 +96,11 @@ os.environ['MASTER_PORT'] = args.ps_port
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010,
-               'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2':62
+               'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2': 62 
                }
 
 # used for FATE
-inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23}
+inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784}
 
 def init_model():
     global tokenizer
@@ -222,6 +222,12 @@ def init_model():
         elif args.model == 'mnistlenet':
             from fedscale.utils.models.simple.models import LeNetForMNIST
             model = LeNetForMNIST(num_classes=args.num_classes)
+        elif args.model[:3] == 'mlp':
+            from fedscale.utils.models.simple.models import MLP
+            model_name = args.model
+            hidden = list(model_name.split('_'))[1:]
+            hidden = [int(x) for x in hidden]
+            model = MLP(inputClass[args.data_set], outputClass[args.data_set], hidden_dim = hidden)
         else:
             if args.model_zoo == "fedscale-zoo":
                 if args.task == "cv":
