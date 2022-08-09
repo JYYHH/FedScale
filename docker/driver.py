@@ -107,7 +107,7 @@ def process_cmd(yaml_file, local=False):
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
-                    time.sleep(2)
+                    time.sleep(5)
                     if local:
                         subprocess.Popen(f'{worker_cmd}',
                                          shell=True, stdout=fout, stderr=fout)
