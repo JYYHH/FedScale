@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+import logging
 
 
 class GCH():
@@ -44,10 +45,10 @@ class GCH():
                           ]
         self.root = root # $FEDSCALE_HOME/benchmark/dataset/csv_data/give_credit_horizontal
         # load data and targets
+        self.dvd_num = 0
         self.data, self.targets = self.load_file()
         self.data, self.targets = torch.tensor(self.data), torch.tensor(self.targets)
         #self.mapping = {idx:file for idx, file in enumerate(raw_data)}
-        self.dvd_num = 0
 
     def __getitem__(self, index):
         # return the data and target of the row 'index'
