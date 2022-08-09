@@ -722,6 +722,9 @@ class SentimentClassifier(nn.Module):
 class MLP(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim = [8]):
         super(MLP, self).__init__()
+
+        self.input_dim = input_dim
+
         self.model = nn.Sequential()
 
         fc = nn.Linear(input_dim, hidden_dim[0])
@@ -738,5 +741,6 @@ class MLP(nn.Module):
         self.model.add_module('fc_last', fc)
 
     def forward(self, x):
+        x = x.view(-1,self.input_dim)
         return self.model(x)
 
