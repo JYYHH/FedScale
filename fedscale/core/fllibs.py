@@ -96,11 +96,14 @@ os.environ['MASTER_PORT'] = args.ps_port
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010,
-               'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2': 62 
+               'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2': 62,
+               'default_credit_horizontal': 2, 'breast_horizontal': 2, 'vehicle_scale_horizontal': 4 
                }
 
 # used for FATE
-inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784}
+inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784,
+              'default_credit_horizontal': 23, 'breast_horizontal': 30, 'vehicle_scale_horizontal': 18
+             }
 
 def init_model():
     global tokenizer
@@ -397,9 +400,21 @@ def init_dataset():
                                               speed_volume_perturb=False,
                                               spec_augment=False)
         elif args.data_set == 'give_credit_horizontal':
-            from fedscale.dataloaders.give_credit_horizontal import GCH
-            train_dataset = GCH(args.data_dir, dataset='train')
-            test_dataset = GCH(args.data_dir, dataset='test')            
+            from fedscale.dataloaders.fate import FATE
+            train_dataset = FATE(args.data_dir, inner_task = 'give_credit_horizontal', dataset='train')
+            test_dataset = FATE(args.data_dir, inner_task = 'give_credit_horizontal', dataset='test') 
+        elif args.data_set == 'default_credit_horizontal':
+            from fedscale.dataloaders.fate import FATE
+            train_dataset = FATE(args.data_dir, inner_task = 'default_credit_horizontal', dataset='train')
+            test_dataset = FATE(args.data_dir, inner_task = 'default_credit_horizontal', dataset='test')                   
+        elif args.data_set == 'breast_horizontal':
+            from fedscale.dataloaders.fate import FATE
+            train_dataset = FATE(args.data_dir, inner_task = 'breast_horizontal', dataset='train')
+            test_dataset = FATE(args.data_dir, inner_task = 'breast_horizontal', dataset='test')                   
+        elif args.data_set == 'vehicle_scale_horizontal':
+            from fedscale.dataloaders.fate import FATE
+            train_dataset = FATE(args.data_dir, inner_task = 'vehicle_scale_horizontal', dataset='train')
+            test_dataset = FATE(args.data_dir, inner_task = 'vehicle_scale_horizontal', dataset='test')   
         else:
             logging.info('DataSet must be {}!'.format(
                 ['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))

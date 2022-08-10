@@ -50,7 +50,7 @@ class DataPartitioner(object):
         self.numOfLabels = numOfClass
         self.client_label_cnt = defaultdict(set)
         self.dvd_num = 0
-        if args.task == 'simple':
+        if args.task == 'simple' and self.data.data_file == 'train':
             self.dvd_num = self.data.dvd_num
 
     def getNumOfLabels(self):
