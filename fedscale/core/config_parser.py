@@ -9,7 +9,7 @@ parser.add_argument('--log_path', type=str, default='./',
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
-parser.add_argument('--ps_port', type=str, default='29501')
+parser.add_argument('--ps_port', type=str, default='29502')
 parser.add_argument('--this_rank', type=int, default=1)
 parser.add_argument('--connection_timeout', type=int, default=60)
 parser.add_argument('--experiment_mode', type=str,
