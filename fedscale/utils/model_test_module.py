@@ -272,10 +272,13 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
                     loss = criterion(output, target)
                     test_loss += loss.data.item()  # Variable.data
-                    acc = accuracy(output, target, topk=(1, 5))
+                    if args.task != 'simple':
+                        acc = accuracy(output, target, topk=(1, 5))
 
-                    correct += acc[0].item()
-                    top_5 += acc[1].item()
+                        correct += acc[0].item()
+                        top_5 += acc[1].item()
+                    else:
+                        correct += accuracy(output, target, topk=(1, 2))[0].item()
 
             except Exception as ex:
                 logging.info(f"Testing of failed as {ex}")
