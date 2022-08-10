@@ -34,10 +34,7 @@ job_conf:
     - task: simple
     - num_participants: 2                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: give_credit_horizontal                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $FEDSCALE_HOME/benchmark/dataset/csv_data/give_credit_horizontal    # Path of the dataset
-    - data_map_file: None            # Allocation of data to each client, turn to iid setting if not provided
-    - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
-    - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
+    - data_dir: ../data/csv_data/give_credit_horizontal    # Path of the dataset
     - model: logistic_regression                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: fed-avg                # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 1                     # How many rounds to run a testing on the testing set
