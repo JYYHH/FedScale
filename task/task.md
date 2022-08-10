@@ -69,11 +69,11 @@
 
 12.  其他的部分可能没太仔细看，或者看了但感觉对目前的task帮助不大。之后可以补充一下（如果需要的话），而且到时候可以直接看 API documentation 了
 
-## Task 1
+## Task 1 (`Solved` except reddit)
 * 主要参考上面的 `4. 关于FedScale对femnist的处理` 和 `8. 关于FedScale对reddit的处理`，对源码进行一定程度的修改使得我们可以跑通我们自己的 `femnist`/`reddit`/`give_credit_horizontal`/`default_credit_horizontal` 数据集 （后两个是 FATE的数据集，具体使用方法可以参考[toolkit](https://github.com/AI-secure/FLBenchmark-toolkit/tree/main/tutorials)，数据集的属性可以参考 [sheet](https://docs.google.com/spreadsheets/d/1RBJpqjUeYOq5ffM_8B9NRSfC_zZTQRrjLuld_FVGElI/edit#gid=0)中的内容）
 * 可以先使用它默认的metric : accuracy 进行观察
 
-### an issue in Task 1 (By JHY, and unsolved)
+### an issue in Task 1 (By JHY, but `solved`)
 * 这个issue对应的内容是上面的 10. 和 11.
 * ___令人疑惑的是，在FATE dataset的训练过程中却出现了这样的情况___ ：<img src = "image/7.png" height = "200">
     * 此时不仅显示总共有7个client，而且这一轮sample的client的index竟然是 [10, 4]
@@ -84,6 +84,10 @@
 * 我认为issue最可能是，别的地方的bug导致register了好多次（类似TCP重传？），所以间接导致了上面这个看似不可解的bug，但最根本的bug是在别处的
 * 而我们在logging里面看不到最根本的bug（目前在解决这个问题...）
 
+#### `如何解决的`
+* 其实是奇奇怪怪也不知道咋解决的，最后认为问题出在 `FedScale默认的ps_port` 上，把这个改一下上面的问题都迎刃而解了
+
+
 ## Task 2
 * 主要参考上面的 `7. 关于FedScale对Test过程的处理`，对源码进行一定程度的修改使得可以支持二分类（`give_credit_horizontal`/`default_credit_horizontal`）的 `AUC` (建议使用 sklearn 算AUC的函数，以实现和之前框架的对齐)
 
@@ -92,7 +96,7 @@
 
 ## Task 3
 - logging system
-- 这周不急
+- 
 
 ## Task 4
 - build a docker image for it
