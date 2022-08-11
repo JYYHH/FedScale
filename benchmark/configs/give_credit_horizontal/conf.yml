@@ -41,9 +41,10 @@ job_conf:
     - rounds: 100                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
     - filter_less: 21                       # Remove clients w/ less than 21 samples
     - num_loaders: 2
-    - local_steps: 5
+    - local_steps: 1
+    - inner_step: 5
     - learning_rate: 0.05
-    - batch_size: 32
+    - batch_size: 200
     - test_bsz: 128
     - use_cuda: False
 

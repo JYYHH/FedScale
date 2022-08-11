@@ -57,6 +57,7 @@ parser.add_argument('--embedding_file', type=str,
 # The configuration of different hyper-parameters for training
 parser.add_argument('--rounds', type=int, default=50)
 parser.add_argument('--local_steps', type=int, default=20)
+parser.add_argument('--inner_step', type=int, default=5)
 parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
 parser.add_argument('--backend', type=str, default="gloo")
