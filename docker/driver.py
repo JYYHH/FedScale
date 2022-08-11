@@ -32,7 +32,7 @@ def load_yaml_conf(yaml_file):
 
 
 def process_cmd(yaml_file, local=False):
-    os.environ["CUDA_VISIBLE_DEVICES"]="1"
+    os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
     yaml_conf = load_yaml_conf(yaml_file)
 
@@ -60,7 +60,11 @@ def process_cmd(yaml_file, local=False):
     for conf in yaml_conf['job_conf']:
         job_conf.update(conf)
 
-    conf_script = ''
+    try:
+        ps_port = yaml_conf['ps_port']
+        conf_script = f' --ps_port={ps_port}'
+    except:
+        conf_script = ''
     setup_cmd = ''
     if yaml_conf['setup_commands'] is not None:
         setup_cmd += (yaml_conf['setup_commands'][0] + ' && ')
