@@ -213,7 +213,11 @@ def init_model():
             from fedscale.utils.models.simple.models import linearRegression
             model = linearRegression(inputClass[args.data_set], outputClass[args.data_set])
         elif args.model[:3] == "mlp":
-            pass # remain work here
+            from fedscale.utils.models.simple.models import MLP
+            model_name = args.model
+            hidden = list(model_name.split('_'))[1:]
+            hidden = [int(x) for x in hidden]
+            model = MLP(inputClass[args.data_set], outputClass[args.data_set], hidden_dim = hidden)
     else:
         if args.model == "lr" or args.model == 'logistic_regression':
             from fedscale.utils.models.simple.models import LogisticRegression
