@@ -369,8 +369,13 @@ class Executor(object):
             else:
                 raise Exception(f"Need customized implementation for model testing in {self.args.engine} engine")
 
-            test_loss, acc, acc_5, testResults = test_res
-            logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+            if self.args.task == "simple":
+                test_loss, acc, AUC, testResults = test_res
+                logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, AUC score: {:.2f} \n"
+                         .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., AUC))
+            else:
+                test_loss, acc, acc_5, testResults = test_res
+                logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
                          .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
         gc.collect()

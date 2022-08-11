@@ -10,6 +10,7 @@ from torch.autograd import Variable
 # libs from fedscale
 from fedscale.core.config_parser import args
 from fedscale.dataloaders.nlp import mask_tokens
+from sklearn.metrics import roc_auc_score
 
 if args.task == "detection":
     import numpy as np
@@ -61,6 +62,8 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     perplexity_loss = 0.
 
     total_cer, total_wer, num_tokens, num_chars = 0, 0, 0, 0
+
+    Predict, Target = None, None
 
     model = model.to(device=device)  # load by pickle
     model.eval()
@@ -264,6 +267,25 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     loss = criterion(
                         outputs, target, output_sizes, target_sizes)
                     test_loss += loss.data.item()
+                elif args.task == "simple":
+                    data, target = Variable(data).to(
+                        device=device), Variable(target).to(device=device)
+                    output = model(data)
+                    loss = criterion(output, target)
+                    test_loss += loss.data.item()  # Variable.data
+                    acc = accuracy(output, target, topk=(1, 2))
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+
+                    if Predict == None:
+                        Predict = output[:,-1].reshape(-1)
+                    else:
+                        Predict = torch.cat((Predict, output[:,-1].reshape(-1)))
+                    
+                    if Target == None:
+                        Target = target.reshape(-1)
+                    else:
+                        Target = torch.cat((Target, target.reshape(-1)))
                 else:
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
@@ -272,13 +294,12 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
                     loss = criterion(output, target)
                     test_loss += loss.data.item()  # Variable.data
-                    if args.task != 'simple':
-                        acc = accuracy(output, target, topk=(1, 5))
+                    acc = accuracy(output, target, topk=(1, 5))
 
-                        correct += acc[0].item()
-                        top_5 += acc[1].item()
-                    else:
-                        correct += accuracy(output, target, topk=(1, 2))[0].item()
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+
+
 
             except Exception as ex:
                 logging.info(f"Testing of failed as {ex}")
@@ -305,13 +326,19 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
         # precision, recall, f1, sup = precision_recall_fscore_support(targets_list, preds, average='samples')
         top_5, correct, test_len = cal_accuracy(targets_list, preds)
 
-    logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), Top-5 Accuracy: {}'
-                 .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
-
     testRes = {'top_1': correct, 'top_5': top_5,
                'test_loss': sum_loss, 'test_len': test_len}
 
-    return test_loss, acc, acc_5, testRes
+    if args.task != "simple":
+        logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), Top-5 Accuracy: {}'
+                 .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
+        return test_loss, acc, acc_5, testRes
+    else:
+        logging.info(f"The target looks like {Target[:5]}")
+        AUC = roc_auc_score(Target.cpu(), Predict.cpu())
+        logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), AUC score: {}'
+                 .format(rank, test_loss, correct, len(test_data.dataset), acc, AUC))
+        return test_loss, acc, AUC, testRes
 
 
 def accuracy(output, target, topk=(1,)):
