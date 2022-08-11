@@ -107,7 +107,7 @@ class Client(object):
                 optimizer_grouped_parameters, lr=conf.learning_rate, weight_decay=1e-2)
         else:
             optimizer = torch.optim.SGD(
-                model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=5e-4)
+                model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=0, dampening=0, nesterov=False)
         return optimizer
 
     def get_criterion(self, conf):
