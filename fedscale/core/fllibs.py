@@ -97,12 +97,14 @@ os.environ['MASTER_PORT'] = args.ps_port
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010,
                'give_credit_horizontal': 2, 'default_credit_horizontal': 2, 'femnist2': 62,
-               'default_credit_horizontal': 2, 'breast_horizontal': 2, 'vehicle_scale_horizontal': 4 
+               'default_credit_horizontal': 2, 'breast_horizontal': 2, 'vehicle_scale_horizontal': 4,
+               'student_horizontal': 1 
                }
 
 # used for FATE
 inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784,
-              'default_credit_horizontal': 23, 'breast_horizontal': 30, 'vehicle_scale_horizontal': 18
+              'default_credit_horizontal': 23, 'breast_horizontal': 30, 'vehicle_scale_horizontal': 18,
+              'student_horizontal': 13 
              }
 
 def init_model():
@@ -419,6 +421,10 @@ def init_dataset():
             from fedscale.dataloaders.fate import FATE
             train_dataset = FATE(args.data_dir, inner_task = 'vehicle_scale_horizontal', dataset='train')
             test_dataset = FATE(args.data_dir, inner_task = 'vehicle_scale_horizontal', dataset='test')   
+        elif args.data_set == 'student_horizontal':
+            from fedscale.dataloaders.fate import FATE
+            train_dataset = FATE(args.data_dir, inner_task = 'student_horizontal', dataset='train')
+            test_dataset = FATE(args.data_dir, inner_task = 'student_horizontal', dataset='test')
         else:
             logging.info('DataSet must be {}!'.format(
                 ['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))

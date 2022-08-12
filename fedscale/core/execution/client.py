@@ -11,9 +11,10 @@ from fedscale.dataloaders.nlp import mask_tokens
 class Client(object):
     """Basic client component in Federated Learning"""
 
-    def __init__(self, conf):
+    def __init__(self, conf, regression = False):
         self.optimizer = ClientOptimizer()
         self.init_task(conf)
+        self.regression = regression
     
     def init_task(self, conf):
         if conf.task == "detection":
@@ -45,6 +46,8 @@ class Client(object):
 
         optimizer = self.get_optimizer(model, conf)
         criterion = self.get_criterion(conf)
+        if self.regression:
+            criterion = torch.nn.MSELoss()
         error_type = None
 
         # TODO: One may hope to run fixed number of epochs, instead of iterations
@@ -187,30 +190,32 @@ class Client(object):
                     
                 else:
                     output = model(data)
-                    loss = criterion(output, target)
-
-                # ======== collect training feedback for other decision components [e.g., oort selector] ======
-
-                if conf.task == 'nlp' or (conf.task == 'text_clf' and conf.model == 'albert-base-v2'):
-                    loss_list = [loss.item()]  # [loss.mean().data.item()]
-
-                elif conf.task == "detection":
-                    loss_list = [loss.tolist()]
-                    loss = loss.mean()
-                else:
-                    loss_list = loss.tolist()
-                    loss = loss.mean()
-
-                temp_loss = sum(loss_list)/float(len(loss_list))
-                self.loss_squre = sum([l**2 for l in loss_list]
-                                    )/float(len(loss_list))
-                # only measure the loss of the first epoch
-                if self.completed_steps < len(client_data):
-                    if self.epoch_train_loss == 1e-4:
-                        self.epoch_train_loss = temp_loss
+                    if self.regression:
+                        loss = criterion(output.reshape(-1), target)
                     else:
-                        self.epoch_train_loss = (
-                            1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
+                        loss = criterion(output, target)
+                # ======== collect training feedback for other decision components [e.g., oort selector] ======
+                if self.regression == False:
+                    if conf.task == 'nlp' or (conf.task == 'text_clf' and conf.model == 'albert-base-v2'):
+                        loss_list = [loss.item()]  # [loss.mean().data.item()]
+
+                    elif conf.task == "detection":
+                        loss_list = [loss.tolist()]
+                        loss = loss.mean()
+                    else:
+                        loss_list = loss.tolist()
+                        loss = loss.mean()
+
+                    temp_loss = sum(loss_list)/float(len(loss_list))
+                    self.loss_squre = sum([l**2 for l in loss_list]
+                                        )/float(len(loss_list))
+                    # only measure the loss of the first epoch
+                    if self.completed_steps < len(client_data):
+                        if self.epoch_train_loss == 1e-4:
+                            self.epoch_train_loss = temp_loss
+                        else:
+                            self.epoch_train_loss = (
+                                1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
 
                 # ========= Define the backward loss ==============
                 optimizer.zero_grad()

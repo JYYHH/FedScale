@@ -300,7 +300,7 @@ class Executor(object):
             Client: A abstract base client class with runtime config conf.
 
         """
-        return Client(conf)
+        return Client(conf, regression = (self.args.data_set == 'student_horizontal'))
 
     def training_handler(self, clientId, conf, model=None):
         """Train model given client id

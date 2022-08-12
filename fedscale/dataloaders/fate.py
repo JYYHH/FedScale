@@ -53,7 +53,12 @@ class FATE():
             self.data_files = [self.data_file + '/breast_homo_guest.csv', 
                                self.data_file + '/breast_homo_host.csv',
                                self.data_file + '/breast_homo_test.csv'
-                              ]    
+                              ]
+        elif inner_task == "student_horizontal":
+            self.data_files = [self.data_file + '/student_homo_guest.csv', 
+                               self.data_file + '/student_homo_host.csv',
+                               self.data_file + '/student_homo_test.csv'
+                              ]  
         elif inner_task == "vehicle_scale_horizontal":
             self.data_files = ['train' + '/vehicle_scale_homo_guest.csv', 
                                'train' + '/vehicle_scale_homo_host.csv'
@@ -63,7 +68,11 @@ class FATE():
         # load data and targets
         self.dvd_num = 0
         self.data, self.targets = self.load_file()
-        self.data, self.targets = torch.FloatTensor(self.data), torch.LongTensor(self.targets)
+
+        if inner_task != "student_horizontal":
+            self.data, self.targets = torch.FloatTensor(self.data), torch.LongTensor(self.targets)
+        else:
+            self.data, self.targets = torch.FloatTensor(self.data), torch.FloatTensor(self.targets)
         #self.mapping = {idx:file for idx, file in enumerate(raw_data)}
 
     def __getitem__(self, index):

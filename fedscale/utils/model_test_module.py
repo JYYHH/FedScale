@@ -53,6 +53,9 @@ def cal_accuracy(targets, outputs):
 
 def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tokenizer=None):
 
+    if args.data_set == 'student_horizontal':
+        criterion = nn.MSELoss()
+
     test_loss = 0
     correct = 0
     top_5 = 0
@@ -60,6 +63,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     correct2 = 0
     test_len = 0
     perplexity_loss = 0.
+    my_mse = 0.
 
     total_cer, total_wer, num_tokens, num_chars = 0, 0, 0, 0
 
@@ -271,21 +275,28 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
                     output = model(data)
-                    loss = criterion(output, target)
+                    if args.data_set == "student_horizontal":
+                        loss = criterion(output.reshape(-1), target)
+                    else:
+                        loss = criterion(output, target)
                     test_loss += loss.data.item()  # Variable.data
-                    acc = accuracy(output, target, topk=(1, 2))
-                    correct += acc[0].item()
-                    top_5 += acc[1].item()
 
-                    if Predict == None:
-                        Predict = output[:,-1].reshape(-1)
-                    else:
-                        Predict = torch.cat((Predict, output[:,-1].reshape(-1)))
-                    
-                    if Target == None:
-                        Target = target.reshape(-1)
-                    else:
-                        Target = torch.cat((Target, target.reshape(-1)))
+                    if args.data_set == 'student_horizontal':
+                        my_mse += loss.data.item() * len(target)
+                    else:    
+                        acc = accuracy(output, target, topk=(1, 2))
+                        correct += acc[0].item()
+                        top_5 += acc[1].item()
+
+                        if Predict == None:
+                            Predict = output[:,-1].reshape(-1)
+                        else:
+                            Predict = torch.cat((Predict, output[:,-1].reshape(-1)))
+                        
+                        if Target == None:
+                            Target = target.reshape(-1)
+                        else:
+                            Target = torch.cat((Target, target.reshape(-1)))
                 else:
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
@@ -305,6 +316,14 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 logging.info(f"Testing of failed as {ex}")
                 break
             test_len += len(target)
+
+
+    if args.data_set == 'student_horizontal':
+        logging.info('Rank {}: MSE Loss = {}'
+                 .format(rank, my_mse))
+        testRes = {'top_1': 0., 'top_5': 0.,
+               'test_loss': test_loss * test_len, 'test_len': test_len}
+        return test_loss, 0.0, 0.0, testRes
 
     if args.task == 'voice':
         correct,  top_5, test_len = float(
