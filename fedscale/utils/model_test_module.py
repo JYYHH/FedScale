@@ -324,6 +324,9 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                  .format(rank, my_mse / test_len, my_mse / batch_num))
         testRes = {'top_1': 0., 'top_5': 0.,
                'test_loss': test_loss * test_len, 'test_len': test_len}
+
+        with open('record_exp.txt','w') as f:
+            f.write(f'mse\n{my_mse / batch_num}')
         return test_loss, 0.0, 0.0, testRes
 
     if args.task == 'voice':
@@ -350,12 +353,16 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                'test_loss': sum_loss, 'test_len': test_len}
 
     if args.task != "simple":
+        with open('record_exp.txt','w') as f:
+            f.write(f'accuracy\n{acc}')
         logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), Top-5 Accuracy: {}'
                  .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
         return test_loss, acc, acc_5, testRes
     else:
         logging.info(f"The target looks like {Target[:5]}")
         AUC = roc_auc_score(Target.cpu(), Predict.cpu())
+        with open('record_exp.txt','w') as f:
+            f.write(f'auc\n{AUC}')
         logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), AUC score: {}'
                  .format(rank, test_loss, correct, len(test_data.dataset), acc, AUC))
         return test_loss, acc, AUC, testRes

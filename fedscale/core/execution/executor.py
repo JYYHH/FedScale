@@ -14,6 +14,8 @@ from fedscale.core.execution.data_processor import collate, voice_collate_fn
 from fedscale.core.execution.rlclient import RLClient
 from fedscale.core.logger.execution import *
 
+import flbenchmark.logging
+
 
 class Executor(object):
     """Abstract class for FedScale executor.
@@ -48,6 +50,10 @@ class Executor(object):
         self.start_run_time = time.time()
         self.received_stop_request = False
         self.event_queue = collections.deque()
+
+        # logging system
+        self.logger = flbenchmark.logging.Logger(id=args.this_rank, agent_type='client')
+        self.not_end = True
 
         super(Executor, self).__init__()
 
@@ -135,7 +141,10 @@ class Executor(object):
         """
         self.setup_env()
         self.model = self.init_model()
+        self.logger.preprocess_data_start()
         self.training_sets, self.testing_sets = self.init_data()
+        self.logger.preprocess_data_end()
+        self.logger.training_start()
         self.setup_communication()
         self.event_monitor()
 
@@ -271,6 +280,8 @@ class Executor(object):
         """
         with open(self.temp_model_path, 'rb') as model_in:
             model = pickle.load(model_in)
+        self.model_update_size = sys.getsizeof(
+            pickle.dumps(model))
         return model
 
     def override_conf(self, config):
@@ -428,15 +439,36 @@ class Executor(object):
                     train_config['model'] = train_model
                     train_config['client_id'] = int(train_config['client_id'])
                     x = train_config['client_id']
-                    logging.info(f'%%%%%%%%%%% Using part {x} ------- %%%%%%%%%%%%')
+                    # logging.info(f'%%%%%%%%%%% Using part {x} ------- %%%%%%%%%%%%')
+                    # logging.info(f'%%%%%%%%%%% Round {self.round} ------- %%%%%%%%%%%%')
+
+                    # if self.round < self.args.rounds:
+                    self.logger.training_round_start()
+                    self.logger.computation_start()
+
                     client_id, train_res = self.Train(train_config)
 
+                    # if self.round < self.args.rounds:
+                    self.logger.computation_end()
+                    self.logger.communication_start(target_id = 0)
+
                     # Upload model updates
+
                     _ = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION.future(
                         job_api_pb2.CompleteRequest(client_id=str(client_id), executor_id=self.executor_id,
                                                     event=commons.UPLOAD_MODEL, status=True, msg=None,
                                                     meta_result=None, data_result=self.serialize_response(train_res)
                                                     ))
+                    # if self.round < self.args.rounds:
+                    self.logger.communication_end(metrics={'byte': self.model_update_size})
+                    self.logger.training_round_end(metrics={'client_num': self.args.num_participants})
+
+                    if self.round == self.args.rounds - 1 and self.not_end:
+                        self.logger.training_end()
+                        self.logger.end()
+                        self.not_end = False
+
+                    # logging.info(f'%%%%%%%%%%% End of Round: {self.args.rounds} ------- %%%%%%%%%%%%')
 
                 elif current_event == commons.MODEL_TEST:
                     self.Test(self.deserialize_response(request.meta))

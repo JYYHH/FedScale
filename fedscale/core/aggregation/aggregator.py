@@ -14,6 +14,8 @@ from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
 
+import flbenchmark.logging
+
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
 
@@ -26,6 +28,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     """
     def __init__(self, args):
         logging.info(f"Job args {args}")
+        # for out logging system
+        self.logger = flbenchmark.logging.Logger(id=0, agent_type='aggregator')
+        self.have_comm = False
 
         self.args = args
         self.experiment_mode = args.experiment_mode
@@ -804,6 +809,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             elif current_event == commons.MODEL_TEST:
                 response_msg = self.get_test_config(client_id)
             elif current_event == commons.UPDATE_MODEL:
+                if self.have_comm == False:
+                    for i in range(self.args.num_participants):
+                        self.logger.communication_start(target_id = i + 1)
+                        self.logger.communication_end(metrics={'byte': self.model_update_size / 8.0 * 1024.0})
+                    self.have_comm = True
+                else:
+                    self.have_comm = False
                 response_data = self.get_global_model()
             elif current_event == commons.SHUT_DOWN:
                 response_msg = self.get_shutdown_config(executor_id)
@@ -853,6 +865,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """Activate event handler according to the received new message
         """
         logging.info("Start monitoring events ...")
+        self.logger.training_start()
+        present_round, started, first_communication = 0, 0, 0
 
         while True:
             # Broadcast events to clients
@@ -860,10 +874,17 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 current_event = self.broadcast_events_queue.popleft()
 
                 if current_event in (commons.UPDATE_MODEL, commons.MODEL_TEST):
+                    if started > 0:
+                        self.logger.training_round_end(metrics={'client_num': self.args.num_participants})
+                        started = 0
                     self.dispatch_client_events(current_event)
 
                 elif current_event == commons.START_ROUND:
+                    present_round += 1
                     self.dispatch_client_events(commons.CLIENT_TRAIN)
+                    if present_round < args.rounds:
+                        self.logger.training_round_start()
+                        started += 1
 
                 elif current_event == commons.SHUT_DOWN:
                     self.dispatch_client_events(commons.SHUT_DOWN)
@@ -889,6 +910,19 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             else:
                 # execute every 100 ms
                 time.sleep(0.1)
+
+        self.logger.training_round_end(metrics={'client_num': self.args.num_participants})
+        self.logger.training_end()
+        
+        self.logger.model_evaluation_start()
+        f = open('record_exp.txt','r')
+        metric_name = f.readline()[:-1]
+        logging.info(f"metric_name = {metric_name}")
+        value = float(f.readline())
+        self.logger.model_evaluation_end(metrics={metric_name: value})
+
+        # End the logging
+        self.logger.end()
 
     def stop(self):
         """Stop the aggregator
