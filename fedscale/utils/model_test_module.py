@@ -63,7 +63,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     correct2 = 0
     test_len = 0
     perplexity_loss = 0.
-    my_mse = 0.
+    my_mse, batch_num = 0., 0
 
     total_cer, total_wer, num_tokens, num_chars = 0, 0, 0, 0
 
@@ -283,6 +283,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
                     if args.data_set == 'student_horizontal':
                         my_mse += loss.data.item() * len(target)
+                        batch_num += 1
                     else:    
                         acc = accuracy(output, target, topk=(1, 2))
                         correct += acc[0].item()
@@ -319,8 +320,8 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
 
     if args.data_set == 'student_horizontal':
-        logging.info('Rank {}: MSE Loss = {}'
-                 .format(rank, my_mse))
+        logging.info('Rank {}: (True) MSE Loss = {}, (Sum) MSE Loss = {}'
+                 .format(rank, my_mse / test_len, my_mse / batch_num))
         testRes = {'top_1': 0., 'top_5': 0.,
                'test_loss': test_loss * test_len, 'test_len': test_len}
         return test_loss, 0.0, 0.0, testRes
