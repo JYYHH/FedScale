@@ -7,6 +7,7 @@ import random
 import subprocess
 import sys
 import time
+import json
 
 import yaml
 
@@ -129,6 +130,141 @@ def process_cmd(yaml_file, local=False):
     print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
 
 
+def load_json_conf(json_file):
+    with open(json_file) as fin:
+        data = json.load(fin)
+    return data
+
+
+def process_cmd_json(json_file, local=False):
+    os.environ["CUDA_VISIBLE_DEVICES"]="2"
+
+    json_conf = load_yaml_conf(json_file)
+
+    bench_para = json_conf['bench_param']
+    if bench_para['mode'] == 'local':
+        ps_ip = 'localhost'
+        local = True
+    else:
+        local = False
+    
+    worker_ips, total_gpus = [], []
+    cmd_script_list = []
+
+    if local:
+        executor_configs = 'localhost:[2]'
+        lis_worker_ips = ['localhost:[2]']    
+        for ip_gpu in lis_worker_ips:
+            ip, gpu_list = ip_gpu.strip().split(':')
+            worker_ips.append(ip)
+            total_gpus.append(eval(gpu_list))
+    else:
+        lis_worker_ips = bench_para['hosts'][1:]
+        ps_ip = bench_para['hosts'][0]['hostname']
+        executor_configs = ''
+        gpu_cnt = 0
+        for tmp_gpu in lis_worker_ips:
+            worker_ips.append(tmp_gpu['hostname'])
+            total_gpus.append(eval([2]))
+            if gpu_cnt == 0:
+                executor_configs = tmp_gpu['hostname'] + ':[2]'
+            else:
+                executor_configs = executor_configs + '=' + tmp_gpu['hostname'] + ':[2]'
+            gpu_cnt = gpu_cnt + 1
+
+    time_stamp = datetime.datetime.fromtimestamp(
+        time.time()).strftime('%m%d_%H%M%S')
+    running_vms = set()
+    job_name = 'fedscale_job'
+    log_path = './logs'
+
+    submit_user = ""
+    
+    job_conf = {'time_stamp': time_stamp,
+                'ps_ip': ps_ip,
+                'job_name': json_conf['framework'],
+                }
+    
+    if job_conf['job_name'] == 'femnist':
+        job_conf['tmp_tag'] = 'simple_femnist'
+
+    
+    for conf_name,conf in json_conf['training_param'].items():
+        if conf_name != "optimizer_param" and conf_name != "optimizer_param" and conf_name != 'tree_param':
+            if conf_name == 'epochs':
+                conf_name = 'rounds'
+            if conf_name == 'client_per_round':
+                conf_name = 'num_participants'
+            
+            job_conf[conf_name] = conf
+
+    # try:
+    #     ps_port = yaml_conf['ps_port']
+    #     conf_script = f' --ps_port={ps_port}'
+    # except: 
+    #     conf_script = ''
+
+    setup_cmd = 'source $HOME/anaconda3/bin/activate fedscale && '
+
+    cmd_sufix = f" "
+
+    for conf_name in job_conf:
+        conf_script = conf_script + f' --{conf_name}={job_conf[conf_name]}'
+        if conf_name == "job_name":
+            job_name = job_conf[conf_name]
+        if conf_name == "log_path":
+            log_path = os.path.join(
+                job_conf[conf_name], 'log', job_name, time_stamp)
+
+    total_gpu_processes = sum([sum(x) for x in total_gpus])
+    # =========== Submit job to parameter server ============
+    running_vms.add(ps_ip)
+    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --num_executors={total_gpu_processes} --executor_configs={executor_configs} "
+
+    with open(f"{job_name}_logging", 'wb') as fout:
+        pass
+
+    print(f"Starting aggregator on {ps_ip}...")
+    with open(f"{job_name}_logging", 'a') as fout:
+        if local:
+            subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
+        else:
+            subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
+                             shell=True, stdout=fout, stderr=fout)
+
+    time.sleep(10)
+    # =========== Submit job to each worker ============
+    rank_id = 1
+    
+    for worker, gpu in zip(worker_ips, total_gpus):
+        running_vms.add(worker)
+        print(f"Starting workers on {worker} ...")
+
+        for cuda_id in range(len(gpu)):
+            for _ in range(gpu[cuda_id]):
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes} --cuda_device=cuda:{cuda_id} "
+                rank_id += 1
+
+                with open(f"{job_name}_logging", 'a') as fout:
+                    time.sleep(5)
+                    if local:
+                        subprocess.Popen(f'{worker_cmd}',
+                                         shell=True, stdout=fout, stderr=fout)
+                    else:
+                        subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
+                                         shell=True, stdout=fout, stderr=fout)
+
+    # dump the address of running workers
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    job_name = os.path.join(current_path, job_name)
+    with open(job_name, 'wb') as fout:
+        job_meta = {'user': submit_user, 'vms': running_vms}
+        pickle.dump(job_meta, fout)
+
+    print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
+
+
+
 def terminate(job_name):
 
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -149,7 +285,8 @@ def terminate(job_name):
 print_help: bool = False
 if len(sys.argv) > 1:
     if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
-        process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
+        # process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
+        process_cmd_json(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])
     else:
