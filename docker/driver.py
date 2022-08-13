@@ -32,10 +32,16 @@ def load_yaml_conf(yaml_file):
     return data
 
 
-def process_cmd(yaml_file, local=False):
+def process_cmd(json_file, local=False):
+    json_conf = load_json_conf(json_file)
+
+    if json_conf["dataset"] == "femnist" or json_conf["dataset"] == "reddit":
+        process_cmd_json(json_file, local = local)
+        return None
+    
     os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
-    yaml_conf = load_yaml_conf(yaml_file)
+    yaml_conf = load_yaml_conf("./base_conf.yml")
 
     ps_ip = yaml_conf['ps_ip']
     worker_ips, total_gpus = [], []
@@ -75,12 +81,41 @@ def process_cmd(yaml_file, local=False):
     cmd_sufix = f" "
 
     for conf_name in job_conf:
+        if conf_name == "job_name":
+            job_conf[conf_name] = json_conf["dataset"] + '+' + json_conf["model"]
+        elif conf_name == "task":
+            job_conf[conf_name] = "simple" # TO-DO ?
+        elif conf_name == "num_participants":
+            job_conf[conf_name] = json_conf["training_param"]["client_per_round"]
+        elif conf_name == "data_set":
+            job_conf[conf_name] = json_conf["dataset"]
+        elif conf_name == "data_dir":
+            job_conf[conf_name] = "../data/csv_data/" + json_conf["dataset"]
+        elif conf_name == "model":
+            job_conf[conf_name] = json_conf["model"]
+        elif conf_name == "gradient_policy":
+            job_conf[conf_name] = json_conf["algorithm"]
+        elif conf_name == "eval_interval":
+            job_conf[conf_name] = json_conf["training_param"]["epochs"] + 1
+        elif conf_name == "rounds":
+            job_conf[conf_name] = json_conf["training_param"]["epochs"] + 2
+        elif conf_name == "inner_step":
+            job_conf[conf_name] = json_conf["training_param"]["inner_step"]
+        elif conf_name == "learning_rate":
+            job_conf[conf_name] = json_conf["training_param"]["learning_rate"]
+        elif conf_name == "batch_size":
+            job_conf[conf_name] = json_conf["training_param"]["batch_size"]
+        elif conf_name == "use_cuda":
+            job_conf[conf_name] = (json_conf["bench_param"]["device"] == "gpu")
+
         conf_script = conf_script + f' --{conf_name}={job_conf[conf_name]}'
         if conf_name == "job_name":
             job_name = job_conf[conf_name]
         if conf_name == "log_path":
             log_path = os.path.join(
                 job_conf[conf_name], 'log', job_name, time_stamp)
+
+    print(conf_script)
 
     total_gpu_processes = sum([sum(x) for x in total_gpus])
     # =========== Submit job to parameter server ============
@@ -137,10 +172,10 @@ def load_json_conf(json_file):
 
 
 def process_cmd_json(json_file, local=False):
+    json_conf = load_json_conf(json_file)
+
     os.environ["CUDA_VISIBLE_DEVICES"]="2"
-
-    json_conf = load_yaml_conf(json_file)
-
+    
     bench_para = json_conf['bench_param']
     if bench_para['mode'] == 'local':
         ps_ip = 'localhost'
@@ -198,11 +233,11 @@ def process_cmd_json(json_file, local=False):
             
             job_conf[conf_name] = conf
 
-    # try:
-    #     ps_port = yaml_conf['ps_port']
-    #     conf_script = f' --ps_port={ps_port}'
-    # except: 
-    #     conf_script = ''
+    try:
+        ps_port = job_conf['ps_port']
+        conf_script = f' --ps_port={ps_port}'
+    except: 
+        conf_script = ''
 
     setup_cmd = 'source $HOME/anaconda3/bin/activate fedscale && '
 
@@ -285,8 +320,8 @@ def terminate(job_name):
 print_help: bool = False
 if len(sys.argv) > 1:
     if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
-        # process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
-        process_cmd_json(sys.argv[2], False if sys.argv[1] == 'submit' else True)
+        process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
+        # process_cmd_json(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])
     else:
