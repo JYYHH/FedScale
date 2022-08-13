@@ -35,9 +35,9 @@ def load_yaml_conf(yaml_file):
 def process_cmd(json_file, local=False):
     json_conf = load_json_conf(json_file)
 
-    if json_conf["dataset"] == "femnist" or json_conf["dataset"] == "reddit":
-        process_cmd_json(json_file, local = local)
-        return None
+    # if json_conf["dataset"] == "femnist" or json_conf["dataset"] == "reddit":
+    #     process_cmd_json(json_file, local = local)
+    #     return None
     
     os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
@@ -90,7 +90,10 @@ def process_cmd(json_file, local=False):
         elif conf_name == "data_set":
             job_conf[conf_name] = json_conf["dataset"]
         elif conf_name == "data_dir":
-            job_conf[conf_name] = "../data/csv_data/" + json_conf["dataset"]
+            if json_conf['dataset'] == 'femnist':
+                job_conf[conf_name] = "../data/" + json_conf["dataset"]
+            else:
+                job_conf[conf_name] = "../data/csv_data/" + json_conf["dataset"]
         elif conf_name == "model":
             job_conf[conf_name] = json_conf["model"]
         elif conf_name == "gradient_policy":
@@ -114,6 +117,9 @@ def process_cmd(json_file, local=False):
         if conf_name == "log_path":
             log_path = os.path.join(
                 job_conf[conf_name], 'log', job_name, time_stamp)
+
+    if job_name == 'femnist':
+        job_conf['temp_tag'] = 'simple_femnist'
 
     print(conf_script)
 
