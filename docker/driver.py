@@ -83,7 +83,7 @@ def process_cmd(json_file, local=False):
     for conf_name in job_conf:
         if conf_name == "job_name":
             job_conf[conf_name] = json_conf["dataset"] + '+' + json_conf["model"]
-        elif conf_name == "task":
+        elif conf_name == "task" and job_conf['dataset'] != 'femnist':
             job_conf[conf_name] = "simple" # TO-DO ?
         elif conf_name == "num_participants":
             job_conf[conf_name] = json_conf["training_param"]["client_per_round"]
