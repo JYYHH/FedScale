@@ -224,7 +224,7 @@ def init_model():
         if args.model == "lr" or args.model == 'logistic_regression':
             from fedscale.utils.models.simple.models import LogisticRegression
             model = LogisticRegression(
-                args.input_dim, outputClass[args.data_set])
+                inputClass[args.data_set], outputClass[args.data_set])
         elif args.model == 'svm':
             from fedscale.utils.models.simple.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])

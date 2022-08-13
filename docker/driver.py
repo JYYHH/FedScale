@@ -83,8 +83,11 @@ def process_cmd(json_file, local=False):
     for conf_name in job_conf:
         if conf_name == "job_name":
             job_conf[conf_name] = json_conf["dataset"] + '+' + json_conf["model"]
-        elif conf_name == "task" and json_conf['dataset'] != 'femnist':
-            job_conf[conf_name] = "simple" # TO-DO ?
+        elif conf_name == "task":
+            if json_conf['dataset'] != 'femnist':
+                job_conf[conf_name] = 'cv'
+            else:
+                job_conf[conf_name] = "simple" # TO-DO ?
         elif conf_name == "num_participants":
             job_conf[conf_name] = json_conf["training_param"]["client_per_round"]
         elif conf_name == "data_set":
@@ -121,7 +124,7 @@ def process_cmd(json_file, local=False):
             log_path = os.path.join(
                 job_conf[conf_name], 'log', job_name, time_stamp)
 
-    if job_name == 'femnist':
+    if json_conf['dataset'] == 'femnist':
         # job_conf['data_set'] = 'femnist2'
         # job_conf['temp_tag'] = 'simple_femnist'
         conf_script = conf_script + ' --temp_tag=simple_femnist'
