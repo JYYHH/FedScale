@@ -924,6 +924,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # End the logging
         self.logger.end()
 
+        with open("shut_down.txt","w") as sf:
+            sf.write("666")
+ 
+
     def stop(self):
         """Stop the aggregator
         """
