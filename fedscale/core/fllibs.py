@@ -102,7 +102,7 @@ outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amaz
                }
 
 # used for FATE
-inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784,
+inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784, 'femnist': 784,
               'default_credit_horizontal': 23, 'breast_horizontal': 30, 'vehicle_scale_horizontal': 18,
               'student_horizontal': 13 
              }
