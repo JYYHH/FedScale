@@ -88,7 +88,10 @@ def process_cmd(json_file, local=False):
         elif conf_name == "num_participants":
             job_conf[conf_name] = json_conf["training_param"]["client_per_round"]
         elif conf_name == "data_set":
-            job_conf[conf_name] = json_conf["dataset"]
+            if json_conf['dataset'] == 'femnist':
+                job_conf[conf_name] = 'femnist2'
+            else:
+                job_conf[conf_name] = json_conf["dataset"]
         elif conf_name == "data_dir":
             if json_conf['dataset'] == 'femnist':
                 job_conf[conf_name] = "../data/" + json_conf["dataset"]
@@ -119,8 +122,9 @@ def process_cmd(json_file, local=False):
                 job_conf[conf_name], 'log', job_name, time_stamp)
 
     if job_name == 'femnist':
-        job_conf['data_set'] = 'femnist2'
-        job_conf['temp_tag'] = 'simple_femnist'
+        # job_conf['data_set'] = 'femnist2'
+        # job_conf['temp_tag'] = 'simple_femnist'
+        conf_script = conf_script + ' --temp_tag=simple_femnist'
 
     print(conf_script)
 
