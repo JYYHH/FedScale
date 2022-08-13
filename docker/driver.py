@@ -119,6 +119,7 @@ def process_cmd(json_file, local=False):
                 job_conf[conf_name], 'log', job_name, time_stamp)
 
     if job_name == 'femnist':
+        job_conf['data_set'] = 'femnist2'
         job_conf['temp_tag'] = 'simple_femnist'
 
     print(conf_script)
