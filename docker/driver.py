@@ -84,7 +84,7 @@ def process_cmd(json_file, local=False):
         if conf_name == "job_name":
             job_conf[conf_name] = json_conf["dataset"] + '+' + json_conf["model"]
         elif conf_name == "task":
-            if json_conf['dataset'] != 'femnist':
+            if json_conf['dataset'] == 'femnist':
                 job_conf[conf_name] = 'cv'
             else:
                 job_conf[conf_name] = "simple" # TO-DO ?
