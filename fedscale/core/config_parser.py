@@ -3,6 +3,9 @@ import argparse
 from fedscale.core import commons
 
 parser = argparse.ArgumentParser()
+# for the random seed
+parser.add_argument('--seed', type=int, default=1)
+
 parser.add_argument('--job_name', type=str, default='demo_job')
 parser.add_argument('--log_path', type=str, default='./',
                     help="default path is ../log")
