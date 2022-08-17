@@ -47,7 +47,7 @@ def process_cmd(json_file, local=False):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
-    executor_configs = "=".join(yaml_conf['worker_ips']).split(':')[0] + f'[{json_conf["training_param"]["client_per_round"]}]'
+    executor_configs = "=".join(yaml_conf['worker_ips']).split(':')[0] + f':[{json_conf["training_param"]["client_per_round"]}]'
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
