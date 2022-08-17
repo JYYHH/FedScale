@@ -51,7 +51,8 @@ def process_cmd(json_file, local=False):
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
-        total_gpus.append(eval(gpu_list))
+        # total_gpus.append(eval(gpu_list))
+        total_gpus.append([json_conf["training_param"]["client_per_round"]])
 
     time_stamp = datetime.datetime.fromtimestamp(
         time.time()).strftime('%m%d_%H%M%S')
@@ -132,6 +133,7 @@ def process_cmd(json_file, local=False):
     print(conf_script)
 
     total_gpu_processes = sum([sum(x) for x in total_gpus])
+    print(f"Total Processes = {total_gpu_processes}")
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
     ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --num_executors={total_gpu_processes} --executor_configs={executor_configs} "
@@ -157,7 +159,9 @@ def process_cmd(json_file, local=False):
 
         for cuda_id in range(len(gpu)):
             for _ in range(gpu[cuda_id]):
-                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes} --cuda_device=cuda:{cuda_id} "
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes}"
+                if job_conf['use_cuda'] == True:
+                    worker_cmd += f" --cuda_device=cuda:{cuda_id} "
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
