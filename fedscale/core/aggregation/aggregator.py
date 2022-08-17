@@ -30,7 +30,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         logging.info(f"Job args {args}")
         # for out logging system
         self.logger = flbenchmark.logging.Logger(id=0, agent_type='aggregator')
-        self.have_comm = False
 
         self.args = args
         self.experiment_mode = args.experiment_mode
@@ -809,13 +808,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             elif current_event == commons.MODEL_TEST:
                 response_msg = self.get_test_config(client_id)
             elif current_event == commons.UPDATE_MODEL:
-                if self.have_comm == False:
-                    for i in range(self.args.num_participants):
-                        self.logger.communication_start(target_id = i + 1)
-                        self.logger.communication_end(metrics={'byte': self.model_update_size / 8.0 * 1024.0})
-                    self.have_comm = True
-                else:
-                    self.have_comm = False
+                self.logger.communication_start(target_id = executor_id)
+                self.logger.communication_end(metrics={'byte': self.model_update_size / 8.0 * 1024.0})
                 response_data = self.get_global_model()
             elif current_event == commons.SHUT_DOWN:
                 response_msg = self.get_shutdown_config(executor_id)

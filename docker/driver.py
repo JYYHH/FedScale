@@ -47,12 +47,14 @@ def process_cmd(json_file, local=False):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
-    executor_configs = "=".join(yaml_conf['worker_ips']).split(':')[0] + f':[{json_conf["training_param"]["client_per_round"]}]'
+    max_process = min(4, json_conf["training_param"]["client_per_round"])
+
+    executor_configs = "=".join(yaml_conf['worker_ips']).split(':')[0] + f':[{max_process}]'
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
         # total_gpus.append(eval(gpu_list))
-        total_gpus.append([json_conf["training_param"]["client_per_round"]])
+        total_gpus.append([max_process])
 
     time_stamp = datetime.datetime.fromtimestamp(
         time.time()).strftime('%m%d_%H%M%S')
@@ -106,9 +108,9 @@ def process_cmd(json_file, local=False):
         elif conf_name == "gradient_policy":
             job_conf[conf_name] = json_conf["algorithm"]
         elif conf_name == "eval_interval":
-            job_conf[conf_name] = json_conf["training_param"]["epochs"] + 1
+            job_conf[conf_name] = json_conf["training_param"]["epochs"] 
         elif conf_name == "rounds":
-            job_conf[conf_name] = json_conf["training_param"]["epochs"] + 2
+            job_conf[conf_name] = json_conf["training_param"]["epochs"] + 1
         elif conf_name == "inner_step":
             job_conf[conf_name] = json_conf["training_param"]["inner_step"]
         elif conf_name == "learning_rate":
