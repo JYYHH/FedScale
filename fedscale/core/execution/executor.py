@@ -61,7 +61,7 @@ class Executor(object):
         """Set up experiments environment
         """
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
-        self.setup_seed(seed=1)
+        self.setup_seed(seed=self.args.seed)
 
     def setup_communication(self):
         """Set up grpc connection
