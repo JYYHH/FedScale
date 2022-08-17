@@ -230,7 +230,7 @@ def init_model():
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
         elif args.model == 'lenet':
             from fedscale.utils.models.simple.models import LeNetForMNIST
-            model = LeNetForMNIST(num_classes=inputClass[args.data_set])
+            model = LeNetForMNIST(num_classes=outputClass[args.data_set])
         elif args.model[:3] == 'mlp':
             from fedscale.utils.models.simple.models import MLP
             model_name = args.model
