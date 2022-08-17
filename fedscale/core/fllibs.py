@@ -102,7 +102,7 @@ outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amaz
                }
 
 # used for FATE
-inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784,
+inputClass = {'give_credit_horizontal': 10, 'default_credit_horizontal': 23, 'femnist2': 784, 'femnist': 784,
               'default_credit_horizontal': 23, 'breast_horizontal': 30, 'vehicle_scale_horizontal': 18,
               'student_horizontal': 13 
              }
@@ -224,13 +224,13 @@ def init_model():
         if args.model == "lr" or args.model == 'logistic_regression':
             from fedscale.utils.models.simple.models import LogisticRegression
             model = LogisticRegression(
-                args.input_dim, outputClass[args.data_set])
+                inputClass[args.data_set], outputClass[args.data_set])
         elif args.model == 'svm':
             from fedscale.utils.models.simple.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
         elif args.model == 'lenet':
             from fedscale.utils.models.simple.models import LeNetForMNIST
-            model = LeNetForMNIST(num_classes=outputClass[args.data_set])
+            model = LeNetForMNIST(num_classes=inputClass[args.data_set])
         elif args.model[:3] == 'mlp':
             from fedscale.utils.models.simple.models import MLP
             model_name = args.model
